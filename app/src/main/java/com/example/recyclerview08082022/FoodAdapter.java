@@ -16,6 +16,7 @@ import java.util.List;
 public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder>{
 
     List<Food> foods;
+    private OnItemClickListener onItemClickListener;
 
     public FoodAdapter(List<Food> foods) {
         this.foods = foods;
@@ -24,6 +25,7 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
     @NonNull
     @Override
     public FoodViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Khởi tạo ra layout
         LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
         View view = layoutInflater.inflate(R.layout.layout_item_food, parent, false);
         return new FoodViewHolder(view);
@@ -49,13 +51,22 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
 
         public FoodViewHolder(@NonNull View itemView) {
             super(itemView);
-            img = itemView.findViewById(R.id.image_view);
+            img = itemView.findViewById(R.id.image_view_food);
             tvAddress = itemView.findViewById(R.id.text_view_address);
             tvName = itemView.findViewById(R.id.text_view_name);
             tvCategory = itemView.findViewById(R.id.text_view_category);
             tvSaleOff = itemView.findViewById(R.id.text_view_sale_off);
             tvDistance = itemView.findViewById(R.id.text_view_distance);
             tvCloseTime = itemView.findViewById(R.id.text_view_title_close_time);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (onItemClickListener != null) {
+                        onItemClickListener.onClick(getAdapterPosition());
+                    }
+                }
+            });
         }
 
         public void bind(Food food) {
@@ -63,7 +74,8 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
             tvName.setText(food.getName());
             tvAddress.setText(food.getAddress());
             tvDistance.setText(String.format(">%.1f km", food.getDistance()));
-            // List Service Kind
+
+            // Category
             categoryList = food.getCategoryEnums();
             if (categoryList == null || categoryList.size() == 0) {
                 tvCategory.setVisibility(View.GONE);
@@ -76,8 +88,7 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
                         if (i == food.getCategoryEnums().size() - 1) {
                             builder.append(food.getCategoryEnums().get(i).toString());
                         } else {
-                            builder.append(food.getCategoryEnums().get(i).toString());
-                            builder.append(" - ");
+                            builder.append(food.getCategoryEnums().get(i).toString() + "/");
                         }
                     }
                     tvCategory.setVisibility(View.VISIBLE);
@@ -105,9 +116,17 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
             if (!checkCurrentTimeOver(timeOpen, timeCurrent, timeClose)) {
                 tvCloseTime.setVisibility(View.GONE);
             } else {
+                String minutes = food.getMinuteOpenTime() < 10 ? "0" + food.getMinuteOpenTime() : food.getMinuteOpenTime() + "";
+                String hour = food.getHourOpenTime() < 10 ? "0" + food.getHourOpenTime() : food.getHourOpenTime() + "";
+                tvCloseTime.setText(String.format("Đóng cửa \n Đặt bàn vào lúc \n%s:%s", hour, minutes));
                 tvCloseTime.setVisibility(View.VISIBLE);
             }
         }
+    }
+
+    // Call back function
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
     }
 
     private int convertTimeToMinus(int hour, int minutes) {
@@ -116,5 +135,9 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
 
     private boolean checkCurrentTimeOver(int timeOpen, int timeCurrent, int timeClose) {
         return timeCurrent >= timeClose || timeCurrent < timeOpen;
+    }
+
+    interface OnItemClickListener {
+        void onClick(int position);
     }
 }
